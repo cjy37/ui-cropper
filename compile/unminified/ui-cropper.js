@@ -2,10 +2,10 @@
  * uiCropper v1.0.4
  * https://crackerakiua.github.io/ui-cropper/
  *
- * Copyright (c) 2016 Alex Kaul
+ * Copyright (c) 2017 Alex Kaul
  * License: MIT
  *
- * Generated at Friday, December 23rd, 2016, 3:05:21 PM
+ * Generated at Friday, September 8th, 2017, 5:11:05 PM
  */
 (function() {
 angular.module('uiCropper', []);
@@ -2407,15 +2407,8 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
                 drawScene();
             }
         };
-
-        var renderImageToDataURL = function (getResultImageSize) {
-            var temp_ctx, temp_canvas,
-                ris = getResultImageSize,
-                center = theArea.getCenterPoint(),
-                retObj = {
-                    dataURI: null,
-                    imageData: null
-                };
+        var renderTempCanvas = function (ris, center) {
+            var temp_ctx, temp_canvas;
             temp_canvas = angular.element('<canvas></canvas>')[0];
             temp_ctx = temp_canvas.getContext('2d');
             temp_canvas.width = ris.w;
@@ -2446,6 +2439,9 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
                         resultWidth = resultHeight * aspectRatio;
                     }
 
+                    temp_canvas.width = resultWidth;
+                    temp_canvas.height = resultHeight;
+
                     temp_ctx.drawImage(image,
                         x,
                         y,
@@ -2457,6 +2453,21 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
                         Math.round(resultHeight));
                 }
 
+            }
+            return temp_canvas;
+
+        };
+        /**
+         * renderImageToDataURL
+         */
+        var renderImageToDataURL = function (getResultImageSize) {
+            var temp_canvas,
+                retObj = {
+                    dataURI: null,
+                    imageData: null
+                };
+            temp_canvas = renderTempCanvas(getResultImageSize, theArea.getCenterPoint());
+            if (image !== null) {
                 if (resImgQuality !== null) {
                     retObj.dataURI = temp_canvas.toDataURL(resImgFormat, resImgQuality);
                 } else {
@@ -2484,53 +2495,9 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
         };
 
         this.getResultImageDataBlob = function () {
-            var temp_ctx, temp_canvas,
-                center = theArea.getCenterPoint(),
-                ris = this.getResultImageSize(),
+            var temp_canvas,
                 _p = $q.defer();
-            temp_canvas = angular.element('<canvas></canvas>')[0];
-            temp_ctx = temp_canvas.getContext('2d');
-            temp_canvas.width = ris.w;
-            temp_canvas.height = ris.h;
-
-            if (image !== null) {
-                var x = (center.x - theArea.getSize().w / 2) * (image.width / ctx.canvas.width),
-                    y = (center.y - theArea.getSize().h / 2) * (image.height / ctx.canvas.height),
-                    areaWidth = theArea.getSize().w * (image.width / ctx.canvas.width),
-                    areaHeight = theArea.getSize().h * (image.height / ctx.canvas.height);
-
-                if (forceAspectRatio) {
-                    temp_ctx.drawImage(image, x, y,
-                        areaWidth,
-                        areaHeight,
-                        0,
-                        0,
-                        ris.w,
-                        ris.h);
-                } else {
-                    var aspectRatio = areaWidth / areaHeight;
-                    var resultHeight, resultWidth;
-
-                    if (aspectRatio > 1) {
-                        resultWidth = ris.w;
-                        resultHeight = resultWidth / aspectRatio;
-                    } else {
-                        resultHeight = ris.h;
-                        resultWidth = resultHeight * aspectRatio;
-                    }
-
-                    temp_ctx.drawImage(image,
-                        x,
-                        y,
-                        areaWidth,
-                        areaHeight,
-                        0,
-                        0,
-                        Math.round(resultWidth),
-                        Math.round(resultHeight));
-                }
-            }
-
+            temp_canvas = renderTempCanvas(this.getResultImageSize(), theArea.getCenterPoint());
             if (resImgQuality !== null) {
                 temp_canvas.toBlob(function (blob) {
                     _p.resolve(blob);
@@ -2862,8 +2829,8 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
                 // We maximize the rendered size
                 var zoom = 1;
                 if (image && ctx && ctx.canvas) {
-					var wzoom = image.width / ctx.canvas.width;
-					var hzoom = image.height / ctx.canvas.height;
+                    var wzoom = image.width / ctx.canvas.width;
+                    var hzoom = image.height / ctx.canvas.height;
                     zoom = Math.min(wzoom, hzoom, 1.5);
                 }
                 var size = {
@@ -2873,15 +2840,15 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
 
                 if (areaMinRelativeSize) {
                     if (size.w < areaMinRelativeSize.w) {
-						zoom = areaMinRelativeSize.w / size.w;
-						size.w = zoom * size.w;
-						size.h = zoom * size.h;
+                        zoom = areaMinRelativeSize.w / size.w;
+                        size.w = zoom * size.w;
+                        size.h = zoom * size.h;
                         //size.w = areaMinRelativeSize.w;
                     }
                     if (size.h < areaMinRelativeSize.h) {
-						zoom = areaMinRelativeSize.h / size.h;
-						size.w = zoom * size.w;
-						size.h = zoom * size.h;
+                        zoom = areaMinRelativeSize.h / size.h;
+                        size.w = zoom * size.w;
+                        size.h = zoom * size.h;
                         //size.h = areaMinRelativeSize.h;
                     }
                 }
@@ -2902,7 +2869,7 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
                 return;
             }
             if (angular.isUndefined(size)) {
-				resImgSize = 'selection';
+                resImgSize = 'selection';
                 return;
             }
             //allow setting of size to "selection" for mirroring selection's dimensions
@@ -3057,7 +3024,6 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
         };
     };
 }]);
-
 angular.module('uiCropper').factory('cropPubSub', [function() {
     return function() {
         var events = {};
@@ -3177,8 +3143,8 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
                             callback(resultImage);
                         }
                         cropHost.getResultImageDataBlob().then(function (blob) {
-							if (!blob)
-								return;
+                            if (!blob)
+                                return;
                             scope.resultBlob = blob;
                             scope.urlBlob = urlCreator.createObjectURL(blob);
                         });
@@ -3265,12 +3231,10 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
                     case 'de':
                     case 'de-DE':
                         return 'Laden';
-						
-					case 'en':
+                    case 'en':
                     case 'en-US':
-						return 'loading';
-						
-					case 'zh':
+                        return 'loading';
+                    case 'zh':
                     case 'zh-CN':
                     default:
                         return '请稍候';
@@ -3303,7 +3267,7 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
                     scope.onLoadError({});
                 }))
                 .on('area-move area-resize', fnSafeApply(function (scope) {
-                    if (scope.changeOnFly === 'true') {
+                    if (scope.changeOnFly === true) {
                         updateResultImage(scope);
                     }
                     updateCropject(scope);
@@ -3340,6 +3304,12 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
                 updateResultImage(scope);
             });
             scope.$watch('areaMinRelativeSize', function () {
+                if (typeof scope.areaMinRelativeSize === 'string' && scope.areaMinRelativeSize !== ''){
+                    if (scope.areaMinRelativeSize.indexOf('}')>=0)
+                        scope.areaMinRelativeSize = JSON.parse(scope.areaMinRelativeSize);
+                    else
+                        scope.areaMinRelativeSize = parseFloat(scope.areaMinRelativeSize);
+                }
                 if (scope.image !== '') {
                     cropHost.setAreaMinRelativeSize(scope.areaMinRelativeSize);
                     updateResultImage(scope);
@@ -3369,9 +3339,15 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
                 updateResultImage(scope);
             });
             scope.$watch('resultImageSize', function () {
-				if (typeof scope.resultImageSize === 'string' && scope.resultImageSize.indexOf(']')>=0)
-                    scope.resultImageSize = JSON.parse(scope.resultImageSize);
-
+                if (typeof scope.resultImageSize === 'string' && 
+                scope.resultImageSize!=='' && 
+                scope.resultImageSize!=='max' && 
+                scope.resultImageSize!=='selection'){
+                    if (scope.resultImageSize.indexOf(']')>=0)
+                        scope.resultImageSize = JSON.parse(scope.resultImageSize);
+                    else
+                        scope.resultImageSize = parseFloat(scope.resultImageSize);
+                }
                 cropHost.setResultImageSize(scope.resultImageSize);
                 updateResultImage(scope);
             });
@@ -3380,7 +3356,7 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
             });
             scope.$watch('aspectRatio', function () {
                 if (typeof scope.aspectRatio === 'string' && scope.aspectRatio !== '') {
-                    scope.aspectRatio = parseInt(scope.aspectRatio);
+                    scope.aspectRatio = parseFloat(scope.aspectRatio);
                 }
                 if (scope.aspectRatio) {
                     cropHost.setAspect(scope.aspectRatio);
@@ -3428,7 +3404,6 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
 }]);
 
 }());
-
 /* canvas-toBlob.js
  * A canvas.toBlob() implementation.
  * 2013-12-27
@@ -3552,7 +3527,6 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
     }
 }(typeof self !== "undefined" && self || typeof window !== "undefined" && window || this.content || this));
 
-
 /*!
  * Color Thief v2.0
  * by Lokesh Dhakar - http://www.lokeshdhakar.com
@@ -3628,6 +3602,7 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
     };
 
     var ColorThief = function() {};
+    window.ColorThief = ColorThief;
 
     /*
      * getColor(sourceImage[, quality])
@@ -4201,7 +4176,6 @@ angular.module('uiCropper').directive('uiCropper', ['$timeout', 'cropHost', 'cro
         this.ColorThief = ColorThief;
     }
 }.call(this));
-
 
 /**
  * Mega pixel image rendering library for iOS6 Safari
