@@ -2831,7 +2831,7 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
                 if (image && ctx && ctx.canvas) {
                     var wzoom = image.width / ctx.canvas.width;
                     var hzoom = image.height / ctx.canvas.height;
-                    zoom = Math.min(wzoom, hzoom, 1.5);
+                    zoom = Math.max(wzoom, hzoom);
                 }
                 var size = {
                     w: zoom * theArea.getSize().w,
