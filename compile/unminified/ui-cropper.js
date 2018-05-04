@@ -1,5 +1,5 @@
 /*!
- * uiCropper v1.0.4
+ * uiCropper v1.0.8(v1.0.4)
  * https://crackerakiua.github.io/ui-cropper/
  *
  * Copyright (c) 2017 Alex Kaul
@@ -2827,10 +2827,10 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
 
             if (resImgSize === 'max') {
                 // We maximize the rendered size
-                var zoom = 1;
+                var zoom = wzoom = hzoom = 1;
                 if (image && ctx && ctx.canvas) {
-                    var wzoom = image.width / ctx.canvas.width;
-                    var hzoom = image.height / ctx.canvas.height;
+                    wzoom = image.width / ctx.canvas.width;
+                    hzoom = image.height / ctx.canvas.height;
                     zoom = Math.max(wzoom, hzoom);
                 }
                 var size = {
@@ -2839,18 +2839,32 @@ angular.module('uiCropper').factory('cropHost', ['$document', '$q', 'cropAreaCir
                 };
 
                 if (areaMinRelativeSize) {
-                    if (size.w < areaMinRelativeSize.w) {
+                    // 选择的比限制范围小，直接返回
+                    if (size.w < areaMinRelativeSize.w && size.h < areaMinRelativeSize.h) {
+                        return size;
+                    }
+                    // 两边都大，取最大边（比例最小）
+                    if (size.w > areaMinRelativeSize.w && size.h > areaMinRelativeSize.h) {
+                        wzoom = areaMinRelativeSize.w / size.w;
+                        hzoom = areaMinRelativeSize.h / size.h;
+                        zoom = Math.min(wzoom, hzoom);
+                        size.w = zoom * size.w;
+                        size.h = zoom * size.h;
+                        return size;
+                    }
+                    if (size.w > areaMinRelativeSize.w) {
                         zoom = areaMinRelativeSize.w / size.w;
                         size.w = zoom * size.w;
                         size.h = zoom * size.h;
-                        //size.w = areaMinRelativeSize.w;
+                        return size;
                     }
-                    if (size.h < areaMinRelativeSize.h) {
+                    if (size.h > areaMinRelativeSize.h) {
                         zoom = areaMinRelativeSize.h / size.h;
                         size.w = zoom * size.w;
                         size.h = zoom * size.h;
-                        //size.h = areaMinRelativeSize.h;
+                        return size;
                     }
+                    return size;
                 }
 
                 return size;
